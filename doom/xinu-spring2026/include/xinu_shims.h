@@ -18,21 +18,21 @@ typedef struct {
     int     count;      /* total chars that would be written */
 } snprntf_state;
 
-typedef struct xinu_file {
-    did32   fd;         /* Xinu device descriptor from open()   */
-    int32   pos;        /* current byte offset into the file    */
-    int32   error;      /* non-zero if an error has occurred    */
-} XINU_FILE;
+typedef int32 FILE;
+#define DOOM_INVALID_FILE ((FILE)-1)
+#define FTELL_MAX_FDS 16
 
-#define FILE XINU_FILE
-#define stderr 
-
-#define DOOM_MAX_FILES  8
-#define FPRINTF_BUF_SIZE 1024
-
-int *fopen(const char *path, const char *mode);
-int fclose(int fp);
-long ftell(int fp);
+FILE doom_fopen(const char *path, const char *mode);
+#define fopen(path, mode) doom_fopen(path, mode)
+long doom_ftell(FILE fp);
+#define ftell(fp) doom_ftell(fp)
+#define fclose(fp) close((did32)(fp))
+#define fread(buf, sz, count, fp)  read((did32)(fp),  (char*)(buf), (int32)((sz)*(count)))
+#define fwrite(buf, sz, count, fp) write((did32)(fp), (char*)(buf), (int32)((sz)*(count)))
+#define SEEK_SET 0
+#define SEEK_CUR 1
+#define SEEK_END 2
+#define fseek(fp, offset, whence) seek((did32)(fp), (uint32)(offset))
 
 #endif // XINU_SHIMS_H*/
 

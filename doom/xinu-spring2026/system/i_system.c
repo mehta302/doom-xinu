@@ -261,7 +261,7 @@ void I_Quit (void)
 #if ORIGCODE
     SDL_Quit();
 
-    exit(0);
+    exit();
 #endif
 }
 
@@ -368,7 +368,7 @@ void I_Error (char *error, ...)
     {
         fprintf(stderr, "Warning: recursive call to I_Error detected.\n");
 #if ORIGCODE
-        exit(-1);
+        exit();
 #endif
     }
     else
@@ -452,7 +452,7 @@ void I_Error (char *error, ...)
 #elif defined(__DJGPP__)
     {
         printf("%s\n", msgbuf);
-        exit(-1);
+        exit();
     }
 
 #else
@@ -465,9 +465,9 @@ void I_Error (char *error, ...)
 #if ORIGCODE
     SDL_Quit();
 
-    exit(-1);
+    exit();
 #else
-    exit(-1);
+    exit();
 #endif
 }
 

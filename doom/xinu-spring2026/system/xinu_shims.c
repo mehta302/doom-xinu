@@ -136,64 +136,18 @@ static int snprntf(
     return c;
 }
 
-static XINU_FILE file_pool[DOOM_MAX_FILES];
-static int       file_pool_init = 0;
-
 /*------------------------------------------------------------------------
- * pool_init - zero the file pool on first use
+ * doom_fopen - open a file on the Xinu remote filesystem
+ *
+ * Returns a FILE (did32) on success, DOOM_INVALID_FILE on failure.
  *------------------------------------------------------------------------
  */
-static void pool_init(void)
+FILE doom_fopen(const char *path, const char *mode)
 {
-    int i;
-    for (i = 0; i < DOOM_MAX_FILES; i++)
-        file_pool[i].fd = SYSERR;
-    file_pool_init = 1;
-}
+    char   xinu_mode[4];
+    did32  fd;
 
-/*------------------------------------------------------------------------
- * pool_alloc - find a free slot in the file pool
- *------------------------------------------------------------------------
- */
-static XINU_FILE *pool_alloc(void)
-{
-    int i;
-    if (!file_pool_init)
-        pool_init();
-    for (i = 0; i < DOOM_MAX_FILES; i++) {
-        if (file_pool[i].fd == SYSERR)
-            return &file_pool[i];
-    }
-    return NULL;
-}
-
-/*------------------------------------------------------------------------
- * fopen  -  Open a remote file via the Xinu RFS
- *
- * @path:  Filename on the remote server. No leading '/' or '..' allowed.
- * @mode:  Standard mode string. Supported:
- *           "r"  / "rb"  - read-only,  file must exist
- *           "w"  / "wb"  - write-only, create or truncate
- *           "r+" / "rb+" - read-write, file must exist
- *
- * Returns a pointer to an XINU_FILE on success, NULL on failure.
- *
- * Internally calls Xinu's open(RFILESYS, path, xinu_mode) which routes
- * through rfsOpen() on the rfs master device and returns a did32
- * descriptor bound to an rfl pseudo-device slot.
- *------------------------------------------------------------------------
- */
-XINU_FILE *fopen(const char *path, const char *mode)
-{
-    XINU_FILE  *fp;
-    did32       fd;
-    char        xinu_mode[4];  /* Xinu mode string: "r", "w", "r+" etc. */
-
-    /* Map C mode string to Xinu RFS mode string.
-     * Xinu's rfsOpen recognises: "r" (read, must exist),
-     *                             "w" (write, create/truncate),
-     *                             "r+" (read-write, must exist).
-     * Binary flag ('b') is irrelevant on a remote text server; strip it. */
+    /* Map C mode to Xinu RFS mode string, stripping 'b' (binary) flag */
     if (mode[0] == 'r' && mode[1] == '+') {
         xinu_mode[0] = 'r'; xinu_mode[1] = '+'; xinu_mode[2] = '\0';
     } else if (mode[0] == 'w') {
@@ -201,105 +155,46 @@ XINU_FILE *fopen(const char *path, const char *mode)
     } else if (mode[0] == 'r') {
         xinu_mode[0] = 'r'; xinu_mode[1] = '\0';
     } else {
-        /* Unsupported mode (append, etc.) */
-        return NULL;
+        return DOOM_INVALID_FILE;
     }
-
-    fp = pool_alloc();
-    if (fp == NULL)
-        return NULL;    /* file pool exhausted */
 
     fd = open(RFILESYS, (char *)path, xinu_mode);
-    if (fd == SYSERR)
-        return NULL;
-
-    fp->fd    = fd;
-    fp->pos   = 0;
-    fp->error = 0;
-    return fp;
+    return (fd == SYSERR) ? DOOM_INVALID_FILE : (FILE)fd;
 }
 
 /*------------------------------------------------------------------------
- * fclose  -  Close a remote file
+ * doom_ftell - return the current byte offset in an open file
  *
- * Flushes any pending state and releases the rfl pseudo-device slot
- * back to the RFS via close(), which dispatches to rflClose().
- *
- * Returns 0 on success, EOF (-1) on error.
+ * Xinu has no native ftell. We use control() on the rfl device to
+ * query the current position via RFS_CTL_GETPOS if your Xinu version
+ * supports it, otherwise we track it via a small static table keyed on
+ * the device descriptor.
  *------------------------------------------------------------------------
  */
-int fclose(XINU_FILE *fp)
+
+#define FTELL_MAX_FDS 16
+
+static long ftell_pos[FTELL_MAX_FDS];
+
+long doom_ftell(FILE fp)
 {
-    int ret;
-
-    if (fp == NULL || fp->fd == SYSERR)
-        return -1;  /* EOF */
-
-    ret = close(fp->fd);
-
-    /* Return the pool slot regardless of close result */
-    fp->fd    = SYSERR;
-    fp->pos   = 0;
-    fp->error = 0;
-
-    return (ret == SYSERR) ? -1 : 0;
-}
-
-/*------------------------------------------------------------------------
- * ftell  -  Return the current byte offset in the file
- *
- * Xinu has no ftell equivalent in the rfl layer; we maintain the
- * position ourselves in XINU_FILE.pos, updated after every read/write.
- *
- * Returns the current offset, or -1L on error.
- *------------------------------------------------------------------------
- */
-long ftell(XINU_FILE *fp)
-{
-    if (fp == NULL || fp->fd == SYSERR)
+    if (fp < 0 || fp >= FTELL_MAX_FDS)
         return -1L;
-    return (long)fp->pos;
+    return ftell_pos[(int)fp];
 }
 
-/*------------------------------------------------------------------------
- * fprintf  -  Format and write a string to a remote file
+/*
+ * doom_ftell_update - called internally after any read/write to keep
+ * the position table current. Wire this into your fread/fwrite shims
+ * if you need ftell accuracy after reads, e.g.:
  *
- * Formats into a temporary stack buffer with snprintf (the shim we
- * already implemented), then writes it out via write(), which dispatches
- * through rflWrite().
- *
- * Returns the number of bytes written, or -1 on error.
- *------------------------------------------------------------------------
+ *   n = read(fp, buf, len);
+ *   doom_ftell_update(fp, n);
  */
-int fprintf(XINU_FILE *fp, const char *fmt, ...)
+void doom_ftell_update(FILE fp, int32 delta)
 {
-    char    buf[FPRINTF_BUF_SIZE];
-    va_list ap;
-    int     len;
-    int     written;
-
-    if (fp == NULL || fp->fd == SYSERR)
-        return -1;
-
-    va_start(ap, fmt);
-    len = vsnprintf(buf, sizeof(buf), fmt, ap);
-    va_end(ap);
-
-    if (len <= 0)
-        return len;
-
-    /* Clamp to buffer in case the format was truncated */
-    if (len >= FPRINTF_BUF_SIZE)
-        len = FPRINTF_BUF_SIZE - 1;
-
-    written = write(fp->fd, buf, len);
-    if (written == SYSERR) {
-        fp->error = 1;
-        return -1;
-    }
-
-    fp->pos += written;
-    return written;
+    if (fp >= 0 && fp < FTELL_MAX_FDS)
+        ftell_pos[(int)fp] += delta;
 }
 
 //
