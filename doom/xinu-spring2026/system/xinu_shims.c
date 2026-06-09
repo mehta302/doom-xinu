@@ -51,6 +51,22 @@ void* realloc(void* ptr, size_t size) {
     return new_ptr;
 }
 
+void* memmove(void* dest, const void* src, size_t n) {
+    char* d = (char*)dest;
+    const char* s = (const char*)src;
+    if (d < s) {
+        while (n--) *d++ = *s++;
+    } else {
+        d += n;
+        s += n;
+        while (n--) *--d = *--s;
+    }
+    return dest;
+}
+
+//
+// // --- String Shims ---
+//
 char *strdup(const char *s)
 {
     size_t len;
@@ -136,6 +152,21 @@ static int snprntf(
     return c;
 }
 
+void puts(const char *msg)
+{
+  char *ptr = msg;
+  while (ptr != '\0')
+    putchar(*(ptr++));
+}
+
+void fflush(FILE fp)
+{
+}
+
+//
+// // --- IO Shims ---
+//
+
 /*------------------------------------------------------------------------
  * doom_fopen - open a file on the Xinu remote filesystem
  *
@@ -195,6 +226,78 @@ void doom_ftell_update(FILE fp, int32 delta)
 {
     if (fp >= 0 && fp < FTELL_MAX_FDS)
         ftell_pos[(int)fp] += delta;
+}
+
+#define RENAME_BUF_SIZE 512
+
+/*
+ * doom_remove - implemented via rfsControl if your Xinu version wires
+ * RFS_CTL_UNLINK, otherwise falls back to opening and truncating.
+ *
+ * Check your rfsControl.c: if it handles a delete control code, use:
+ *   control(RFILESYS, RFS_CTL_UNLINK, (int32)path, 0)
+ *
+ * If not wired, the best client-only option is to open the file for
+ * write (which truncates it to zero on the server) and close it,
+ * leaving a zero-byte file. This is the safest no-server fallback.
+ */
+int doom_remove(const char *path)
+{
+    FILE fd;
+
+    /* Attempt via control() first — works if rfserver supports it */
+    if (control(RFILESYS, RFS_CTL_UNLINK, (int32)path, 0) != SYSERR)
+        return 0;
+
+    /*
+     * Fallback: truncate to zero. Not a true delete, but prevents
+     * Doom from reading stale save data on the next load.
+     */
+    fd = open(RFILESYS, (char *)path, "w");
+    if (fd == SYSERR)
+        return -1;
+    close(fd);
+    return 0;
+}
+
+/*
+ * doom_rename - copy oldpath to newpath byte-by-byte, then remove oldpath.
+ *
+ * This is not atomic: a crash between the write and remove leaves both
+ * files. Acceptable for Doom save games — the worst case is a duplicate.
+ */
+int doom_rename(const char *oldpath, const char *newpath)
+{
+    FILE   src, dst;
+    char   buf[RENAME_BUF_SIZE];
+    int32  n;
+    int    ret = 0;
+
+    src = open(RFILESYS, (char *)oldpath, "r");
+    if (src == SYSERR)
+        return -1;
+
+    dst = open(RFILESYS, (char *)newpath, "w");
+    if (dst == SYSERR) {
+        close(src);
+        return -1;
+    }
+
+    /* Copy contents */
+    while ((n = read(src, buf, sizeof(buf))) > 0) {
+        if (write(dst, buf, n) != n) {
+            ret = -1;
+            break;
+        }
+    }
+
+    close(src);
+    close(dst);
+
+    if (ret == 0)
+        remove(oldpath);    /* best-effort; ignore failure */
+
+    return ret;
 }
 
 //

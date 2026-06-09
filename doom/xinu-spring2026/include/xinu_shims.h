@@ -5,12 +5,14 @@ void* malloc(size_t size);
 void free(void* ptr);
 void* calloc(size_t nmemb, size_t size);
 void* realloc(void* ptr, size_t size);
+void* memmove(void* dest, const void* src, size_t n);
 
 char* strdup(const char *s);
 int strcmp(const char *s1, const char *s2);
 int isspace(int c);
 int snprntf(int astate, int ac);
 int snprintf(char *str, size_t size, const char *fmt, ...);
+void puts(const char *msg);
 
 typedef struct {
     char   *ptr;        /* current write position           */
@@ -33,6 +35,12 @@ long doom_ftell(FILE fp);
 #define SEEK_CUR 1
 #define SEEK_END 2
 #define fseek(fp, offset, whence) seek((did32)(fp), (uint32)(offset))
+int doom_remove(const char *path);
+#define remove(path) doom_remove(path)
+int doom_rename(const char *oldpath, const char *newpath);
+#define rename(oldpath, newpath) doom_rename(oldpath, newpath)
+void doom_fflush(FILE fp);
+#define fflush(fp) doom_fflush(fp)
 
 #endif // XINU_SHIMS_H*/
 

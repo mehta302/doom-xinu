@@ -19,6 +19,8 @@ extern	int32	fscanf(int32, char *, int32);
 
 /* Prototypes for formatted output functions */
 
+extern  int32 fprntf(int, int);
+extern  int32 vfprintf(int, char *, __builtin_va_list);
 extern	int32	fprintf(int, char *, ...);
 extern	int32	printf(const char *, ...);
 extern	int32	sprintf(char *, char *, ...);
