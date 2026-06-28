@@ -4,7 +4,8 @@
 
 process	main(void)
 {
-  doomgeneric_Create(1, {"doomgeneric"});
+  char **argv = (char *[]){"doomgeneric"};
+  doomgeneric_Create(1, argv);
   while (1) {
     doomgeneric_Tick();
   }

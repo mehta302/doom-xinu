@@ -16,13 +16,14 @@
 // memory.
 //
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+// #include <stdio.h>
+// #include <stdlib.h>
+// #include <string.h>
 
-#include "memio.h"
+// #include "memio.h"
 
-#include "z_zone.h"
+// #include "z_zone.h"
+#include <xinu.h>
 
 typedef enum {
 	MODE_READ,

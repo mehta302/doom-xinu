@@ -163,6 +163,18 @@ void fflush(FILE fp)
 {
 }
 
+int toupper(int ch)
+{
+  if (c >= 'a' && c <= 'z')
+    return c - ('a' - 'A');
+  return c;
+}
+
+int system(const char *s)
+{
+  return 0;
+}
+
 //
 // // --- IO Shims ---
 //

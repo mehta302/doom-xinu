@@ -13,6 +13,8 @@ int isspace(int c);
 int snprntf(int astate, int ac);
 int snprintf(char *str, size_t size, const char *fmt, ...);
 void puts(const char *msg);
+int toupper(int ch);
+int system(const char *s);
 
 typedef struct {
     char   *ptr;        /* current write position           */
