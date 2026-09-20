@@ -1539,8 +1539,9 @@ char	savename[256];
 
 void G_LoadGame (char* name) 
 { 
-    M_StringCopy(savename, name, sizeof(savename));
-    gameaction = ga_loadgame; 
+    kprintf("G_LoadGame not supported\n");
+    //M_StringCopy(savename, name, sizeof(savename));
+    //gameaction = ga_loadgame; 
 } 
  
 #define VERSIONSIZE		16 
@@ -1548,48 +1549,49 @@ void G_LoadGame (char* name)
 
 void G_DoLoadGame (void) 
 {
-    int savedleveltime;
+    kprintf("G_DoLoadGame() not supported\n");
+    //int savedleveltime;
 	 
-    gameaction = ga_nothing; 
+    //gameaction = ga_nothing; 
 	 
-    save_stream = fopen(savename, "rb");
+    //save_stream = fopen(savename, "rb");
 
-    if (save_stream == NULL)
-    {
-    	return;
-    }
+    //if (save_stream == NULL)
+    //{
+    //	return;
+    //}
 
-    savegame_error = false;
+    //savegame_error = false;
 
-    if (!P_ReadSaveGameHeader())
-    {
-        fclose(save_stream);
-        return;
-    }
+    //if (!P_ReadSaveGameHeader())
+    //{
+    //    fclose(save_stream);
+    //    return;
+    //}
 
-    savedleveltime = leveltime;
-    
-    // load a base level 
-    G_InitNew (gameskill, gameepisode, gamemap); 
+    //savedleveltime = leveltime;
+    //
+    //// load a base level 
+    //G_InitNew (gameskill, gameepisode, gamemap); 
  
-    leveltime = savedleveltime;
+    //leveltime = savedleveltime;
 
-    // dearchive all the modifications
-    P_UnArchivePlayers (); 
-    P_UnArchiveWorld (); 
-    P_UnArchiveThinkers (); 
-    P_UnArchiveSpecials (); 
+    //// dearchive all the modifications
+    //P_UnArchivePlayers (); 
+    //P_UnArchiveWorld (); 
+    //P_UnArchiveThinkers (); 
+    //P_UnArchiveSpecials (); 
  
-    if (!P_ReadSaveGameEOF())
-	I_Error ("Bad savegame");
+    //if (!P_ReadSaveGameEOF())
+	//I_Error ("Bad savegame");
 
-    fclose(save_stream);
-    
-    if (setsizeneeded)
-    	R_ExecuteSetViewSize ();
-    
-    // draw the pattern into the back screen
-    R_FillBackScreen (); 
+    //fclose(save_stream);
+    //
+    //if (setsizeneeded)
+    //	R_ExecuteSetViewSize ();
+    //
+    //// draw the pattern into the back screen
+    //R_FillBackScreen (); 
 } 
  
 
@@ -1603,86 +1605,88 @@ G_SaveGame
 ( int	slot,
   char*	description )
 {
-    savegameslot = slot;
-    M_StringCopy(savedescription, description, sizeof(savedescription));
-    sendsave = true;
+    kprintf("G_SaveGame() not supported\n");
+    //savegameslot = slot;
+    //M_StringCopy(savedescription, description, sizeof(savedescription));
+    //sendsave = true;
 }
 
 void G_DoSaveGame (void) 
 { 
-    char *savegame_file;
-    char *temp_savegame_file;
-    char *recovery_savegame_file;
-
-    recovery_savegame_file = NULL;
-    temp_savegame_file = P_TempSaveGameFile();
-    savegame_file = P_SaveGameFile(savegameslot);
-
-    // Open the savegame file for writing.  We write to a temporary file
-    // and then rename it at the end if it was successfully written.
-    // This prevents an existing savegame from being overwritten by 
-    // a corrupted one, or if a savegame buffer overrun occurs.
-    save_stream = fopen(temp_savegame_file, "wb");
-
-    if (save_stream == NULL)
-    {
-        // Failed to save the game, so we're going to have to abort. But
-        // to be nice, save to somewhere else before we call I_Error().
-        recovery_savegame_file = M_TempFile("recovery.dsg");
-        save_stream = fopen(recovery_savegame_file, "wb");
-        if (save_stream == NULL)
-        {
-            I_Error("Failed to open either '%s' or '%s' to write savegame.",
-                    temp_savegame_file, recovery_savegame_file);
-        }
-    }
-
-    savegame_error = false;
-
-    P_WriteSaveGameHeader(savedescription);
- 
-    P_ArchivePlayers (); 
-    P_ArchiveWorld (); 
-    P_ArchiveThinkers (); 
-    P_ArchiveSpecials (); 
-	 
-    P_WriteSaveGameEOF();
-	 
-    // Enforce the same savegame size limit as in Vanilla Doom, 
-    // except if the vanilla_savegame_limit setting is turned off.
-
-    if (vanilla_savegame_limit && ftell(save_stream) > SAVEGAMESIZE)
-    {
-        I_Error ("Savegame buffer overrun");
-    }
-    
-    // Finish up, close the savegame file.
-
-    fclose(save_stream);
-
-    if (recovery_savegame_file != NULL)
-    {
-        // We failed to save to the normal location, but we wrote a
-        // recovery file to the temp directory. Now we can bomb out
-        // with an error.
-        I_Error("Failed to open savegame file '%s' for writing.\n"
-                "But your game has been saved to '%s' for recovery.",
-                temp_savegame_file, recovery_savegame_file);
-    }
-
-    // Now rename the temporary savegame file to the actual savegame
-    // file, overwriting the old savegame if there was one there.
-
-    remove(savegame_file);
-    rename(temp_savegame_file, savegame_file);
-    
-    gameaction = ga_nothing;
-    M_StringCopy(savedescription, "", sizeof(savedescription));
-
-    players[consoleplayer].message = DEH_String(GGSAVED);
-
-    // draw the pattern into the back screen
-    R_FillBackScreen ();	
+    kprintf("G_DoSaveGame() not supported\n");
+//    char *savegame_file;
+//    char *temp_savegame_file;
+//    char *recovery_savegame_file;
+//
+//    recovery_savegame_file = NULL;
+//    temp_savegame_file = P_TempSaveGameFile();
+//    savegame_file = P_SaveGameFile(savegameslot);
+//
+//    // Open the savegame file for writing.  We write to a temporary file
+//    // and then rename it at the end if it was successfully written.
+//    // This prevents an existing savegame from being overwritten by 
+//    // a corrupted one, or if a savegame buffer overrun occurs.
+//    save_stream = fopen(temp_savegame_file, "wb");
+//
+//    if (save_stream == NULL)
+//    {
+//        // Failed to save the game, so we're going to have to abort. But
+//        // to be nice, save to somewhere else before we call I_Error().
+//        recovery_savegame_file = M_TempFile("recovery.dsg");
+//        save_stream = fopen(recovery_savegame_file, "wb");
+//        if (save_stream == NULL)
+//        {
+//            I_Error("Failed to open either '%s' or '%s' to write savegame.",
+//                    temp_savegame_file, recovery_savegame_file);
+//        }
+//    }
+//
+//    savegame_error = false;
+//
+//    P_WriteSaveGameHeader(savedescription);
+// 
+//    P_ArchivePlayers (); 
+//    P_ArchiveWorld (); 
+//    P_ArchiveThinkers (); 
+//    P_ArchiveSpecials (); 
+//	 
+//    P_WriteSaveGameEOF();
+//	 
+//    // Enforce the same savegame size limit as in Vanilla Doom, 
+//    // except if the vanilla_savegame_limit setting is turned off.
+//
+//    if (vanilla_savegame_limit && ftell(save_stream) > SAVEGAMESIZE)
+//    {
+//        I_Error ("Savegame buffer overrun");
+//    }
+//    
+//    // Finish up, close the savegame file.
+//
+//    fclose(save_stream);
+//
+//    if (recovery_savegame_file != NULL)
+//    {
+//        // We failed to save to the normal location, but we wrote a
+//        // recovery file to the temp directory. Now we can bomb out
+//        // with an error.
+//        I_Error("Failed to open savegame file '%s' for writing.\n"
+//                "But your game has been saved to '%s' for recovery.",
+//                temp_savegame_file, recovery_savegame_file);
+//    }
+//
+//    // Now rename the temporary savegame file to the actual savegame
+//    // file, overwriting the old savegame if there was one there.
+//
+//    remove(savegame_file);
+//    rename(temp_savegame_file, savegame_file);
+//    
+//    gameaction = ga_nothing;
+//    M_StringCopy(savedescription, "", sizeof(savedescription));
+//
+//    players[consoleplayer].message = DEH_String(GGSAVED);
+//
+//    // draw the pattern into the back screen
+//    R_FillBackScreen ();	
 } 
  
 

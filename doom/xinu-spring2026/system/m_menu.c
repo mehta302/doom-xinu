@@ -503,25 +503,26 @@ menu_t  SaveDef =
 //
 void M_ReadSaveStrings(void)
 {
-    FILE   *handle;
-    int     i;
-    char    name[256];
-
-    for (i = 0;i < load_end;i++)
-    {
-        M_StringCopy(name, P_SaveGameFile(i), sizeof(name));
-
-	handle = fopen(name, "rb");
-        if (handle == NULL)
-        {
-            M_StringCopy(savegamestrings[i], EMPTYSTRING, SAVESTRINGSIZE);
-            LoadMenu[i].status = 0;
-            continue;
-        }
-	fread(&savegamestrings[i], 1, SAVESTRINGSIZE, handle);
-	fclose(handle);
-	LoadMenu[i].status = 1;
-    }
+    kprintf("M_ReadSaveStrings not supported\n");
+//    FILE   *handle;
+//    int     i;
+//    char    name[256];
+//
+//    for (i = 0;i < load_end;i++)
+//    {
+//        M_StringCopy(name, P_SaveGameFile(i), sizeof(name));
+//
+//	handle = fopen(name, "rb");
+//        if (handle == NULL)
+//        {
+//            M_StringCopy(savegamestrings[i], EMPTYSTRING, SAVESTRINGSIZE);
+//            LoadMenu[i].status = 0;
+//            continue;
+//        }
+//	fread(&savegamestrings[i], 1, SAVESTRINGSIZE, handle);
+//	fclose(handle);
+//	LoadMenu[i].status = 1;
+//    }
 }
 
 

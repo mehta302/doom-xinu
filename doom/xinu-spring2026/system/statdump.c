@@ -19,15 +19,16 @@
 
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#include "d_player.h"
-#include "d_mode.h"
-#include "m_argv.h"
-
-#include "statdump.h"
+//#include <stdio.h>
+//#include <stdlib.h>
+//#include <string.h>
+//
+//#include "d_player.h"
+//#include "d_mode.h"
+//#include "m_argv.h"
+//
+//#include "statdump.h"
+#include <xinu.h>
 
 /* Par times for E1M1-E1M9. */
 static const int doom1_par_times[] =

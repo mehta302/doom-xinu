@@ -1846,8 +1846,9 @@ void M_SetConfigFilenames(char *main_config, char *extra_config)
 
 void M_SaveDefaults (void)
 {
-    SaveDefaultCollection(&doom_defaults);
-    SaveDefaultCollection(&extra_defaults);
+    kprintf("M_SaveDefaults not supported\n");
+    //SaveDefaultCollection(&doom_defaults);
+    //SaveDefaultCollection(&extra_defaults);
 }
 
 //

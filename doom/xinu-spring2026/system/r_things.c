@@ -34,6 +34,7 @@
 // #include "r_local.h"
 //
 // #include "doomstat.h"
+#include <xinu.h>
 
 
 

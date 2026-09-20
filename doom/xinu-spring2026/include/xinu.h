@@ -67,7 +67,6 @@
 #include <f_finale.h>
 #include <f_wipe.h>
 #include <g_game.h>
-#include <gusconf.h>
 #include <hu_lib.h>
 #include <hu_stuff.h>
 #include <i_cdmus.h>

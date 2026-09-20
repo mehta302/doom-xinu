@@ -12,9 +12,11 @@ int strcmp(const char *s1, const char *s2);
 int isspace(int c);
 int snprntf(int astate, int ac);
 int snprintf(char *str, size_t size, const char *fmt, ...);
+int vsnprntf(int actx, int ac);
+int vsnprintf(char *str, size_t size, char *fmt, va_list ap);
 void puts(const char *msg);
 int toupper(int ch);
-int system(const char *s);
+float atof(const char *value);
 
 typedef struct {
     char   *ptr;        /* current write position           */
@@ -22,27 +24,42 @@ typedef struct {
     int     count;      /* total chars that would be written */
 } snprntf_state;
 
-typedef int32 FILE;
-#define DOOM_INVALID_FILE ((FILE)-1)
-#define FTELL_MAX_FDS 16
+struct vsnf_ctx
+{
+    char    *bufp;    /* next slot to fill, or (once out of room) the */
+                       /* slot the terminating '\0' will land in      */
+    size_t  left;      /* real characters still fitting (excludes the */
+                        /* one byte reserved for the terminator)      */
+    size_t  total;      /* count of ALL characters the format would   */
+                         /* produce, truncated or not (return value)  */
+};
 
-FILE doom_fopen(const char *path, const char *mode);
-#define fopen(path, mode) doom_fopen(path, mode)
-long doom_ftell(FILE fp);
-#define ftell(fp) doom_ftell(fp)
-#define fclose(fp) close((did32)(fp))
-#define fread(buf, sz, count, fp)  read((did32)(fp),  (char*)(buf), (int32)((sz)*(count)))
-#define fwrite(buf, sz, count, fp) write((did32)(fp), (char*)(buf), (int32)((sz)*(count)))
-#define SEEK_SET 0
-#define SEEK_CUR 1
-#define SEEK_END 2
-#define fseek(fp, offset, whence) seek((did32)(fp), (uint32)(offset))
-int doom_remove(const char *path);
-#define remove(path) doom_remove(path)
-int doom_rename(const char *oldpath, const char *newpath);
-#define rename(oldpath, newpath) doom_rename(oldpath, newpath)
-void doom_fflush(FILE fp);
-#define fflush(fp) doom_fflush(fp)
+int system(const char *s);
+int fflush(int fs);
+
+//typedef int32 FILE;
+//#define DOOM_INVALID_FILE ((FILE)-1)
+//#define FTELL_MAX_FDS 16
+//
+//FILE doom_fopen(const char *path, const char *mode);
+//#define fopen(path, mode) doom_fopen(path, mode)
+//long doom_ftell(FILE *fp);
+//#define ftell(fp) doom_ftell(fp)
+//#define fclose(fp) close((did32)(fp))
+//#define fread(buf, sz, count, fp)  read((did32)(fp),  (char*)(buf), (int32)((sz)*(count)))
+//#define fwrite(buf, sz, count, fp) write((did32)(fp), (char*)(buf), (int32)((sz)*(count)))
+//#define SEEK_SET 0
+//#define SEEK_CUR 1
+//#define SEEK_END 2
+//#define fseek(fp, offset, whence) seek((did32)(fp), (uint32)(offset))
+//int doom_remove(const char *path);
+//#define remove(path) doom_remove(path)
+//int doom_rename(const char *oldpath, const char *newpath);
+//#define rename(oldpath, newpath) doom_rename(oldpath, newpath)
+//void doom_fflush(FILE fp);
+//#define fflush(fp) doom_fflush(fp)
+//void mkdir(const char *s);
+
 
 #endif // XINU_SHIMS_H*/
 

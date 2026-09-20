@@ -152,15 +152,64 @@ static int snprntf(
     return c;
 }
 
+/*------------------------------------------------------------------------
+ *  vsnprintf  -  Format arguments and place output in a bounded string.
+ *                Returns the number of characters that would have
+ *                been written had size been unlimited (not counting
+ *                the null byte) -- the standard C99 contract.
+ *------------------------------------------------------------------------
+ */
+int     vsnprintf(
+          char          *str,           /* output buffer                */
+          size_t        size,           /* size of output buffer, bytes */
+          char          *fmt,           /* format string                */
+          va_list       ap              /* caller's argument list       */
+        )
+{
+    struct vsnf_ctx ctx;
+
+    ctx.bufp  = str;
+    ctx.left  = (size > 0) ? (size - 1) : 0;
+    ctx.total = 0;
+
+    _fdoprnt(fmt, ap, vsnprntf, (int)&ctx);
+
+    if (size > 0)
+    {
+        *ctx.bufp = '\0';
+    }
+
+    return ((int)ctx.total);
+}
+
+/*------------------------------------------------------------------------
+ *  vsnprntf  -  Routine called by _fdoprnt to handle each character.
+ *               Only writes while room remains, but always counts,
+ *               so the truncated-length return value stays correct.
+ *------------------------------------------------------------------------
+ */
+static int      vsnprntf(
+                  int           actx,
+                  int           ac
+                )
+{
+    struct vsnf_ctx *ctx = (struct vsnf_ctx *)actx;
+    char c = (char)ac;
+
+    ctx->total++;
+    if (ctx->left > 0)
+    {
+        *ctx->bufp++ = c;
+        ctx->left--;
+    }
+    return ((int)c);
+}
+
 void puts(const char *msg)
 {
   char *ptr = msg;
   while (ptr != '\0')
     putchar(*(ptr++));
-}
-
-void fflush(FILE fp)
-{
 }
 
 int toupper(int ch)
@@ -170,147 +219,230 @@ int toupper(int ch)
   return c;
 }
 
-int system(const char *s)
+float my_atof(const char *str)
 {
-  return 0;
+    float result = 0.0;
+    float sign = 1.0;
+
+    /* Skip leading whitespace */
+    while (isspace((unsigned char)*str)) {
+        str++;
+    }
+
+    /* Handle optional sign */
+    if (*str == '-') {
+        sign = -1.0;
+        str++;
+    } else if (*str == '+') {
+        str++;
+    }
+
+    /* Parse integer part */
+    while (isdigit((unsigned char)*str)) {
+        result = result * 10.0 + (*str - '0');
+        str++;
+    }
+
+    /* Parse fractional part */
+    if (*str == '.') {
+        float frac = 0.0;
+        float scale = 1.0;
+        str++;
+        while (isdigit((unsigned char)*str)) {
+            frac = frac * 10.0 + (*str - '0');
+            scale *= 10.0;
+            str++;
+        }
+        result += frac / scale;
+    }
+
+    result *= sign;
+
+    /* Parse exponent part (e.g. 1.5e10) */
+    if (*str == 'e' || *str == 'E') {
+        str++;
+        int exp_sign = 1;
+        int exponent = 0;
+
+        if (*str == '-') {
+            exp_sign = -1;
+            str++;
+        } else if (*str == '+') {
+            str++;
+        }
+
+        while (isdigit((unsigned char)*str)) {
+            exponent = exponent * 10 + (*str - '0');
+            str++;
+        }
+
+        float factor = 1.0;
+        for (int i = 0; i < exponent; i++) {
+            factor *= 10.0;
+        }
+
+        if (exp_sign == 1) {
+            result *= factor;
+        } else {
+            result /= factor;
+        }
+    }
+
+    return result;
 }
 
 //
 // // --- IO Shims ---
 //
-
-/*------------------------------------------------------------------------
- * doom_fopen - open a file on the Xinu remote filesystem
- *
- * Returns a FILE (did32) on success, DOOM_INVALID_FILE on failure.
- *------------------------------------------------------------------------
- */
-FILE doom_fopen(const char *path, const char *mode)
+int system(const char *s)
 {
-    char   xinu_mode[4];
-    did32  fd;
-
-    /* Map C mode to Xinu RFS mode string, stripping 'b' (binary) flag */
-    if (mode[0] == 'r' && mode[1] == '+') {
-        xinu_mode[0] = 'r'; xinu_mode[1] = '+'; xinu_mode[2] = '\0';
-    } else if (mode[0] == 'w') {
-        xinu_mode[0] = 'w'; xinu_mode[1] = '\0';
-    } else if (mode[0] == 'r') {
-        xinu_mode[0] = 'r'; xinu_mode[1] = '\0';
-    } else {
-        return DOOM_INVALID_FILE;
-    }
-
-    fd = open(RFILESYS, (char *)path, xinu_mode);
-    return (fd == SYSERR) ? DOOM_INVALID_FILE : (FILE)fd;
+  kprintf("system() not supported\n");
+  return 0;
 }
 
-/*------------------------------------------------------------------------
- * doom_ftell - return the current byte offset in an open file
- *
- * Xinu has no native ftell. We use control() on the rfl device to
- * query the current position via RFS_CTL_GETPOS if your Xinu version
- * supports it, otherwise we track it via a small static table keyed on
- * the device descriptor.
- *------------------------------------------------------------------------
- */
-
-#define FTELL_MAX_FDS 16
-
-static long ftell_pos[FTELL_MAX_FDS];
-
-long doom_ftell(FILE fp)
+int fflush(int fs)
 {
-    if (fp < 0 || fp >= FTELL_MAX_FDS)
-        return -1L;
-    return ftell_pos[(int)fp];
+  kprintf("fflush() not supported\n");
 }
 
-/*
- * doom_ftell_update - called internally after any read/write to keep
- * the position table current. Wire this into your fread/fwrite shims
- * if you need ftell accuracy after reads, e.g.:
- *
- *   n = read(fp, buf, len);
- *   doom_ftell_update(fp, n);
- */
-void doom_ftell_update(FILE fp, int32 delta)
-{
-    if (fp >= 0 && fp < FTELL_MAX_FDS)
-        ftell_pos[(int)fp] += delta;
-}
 
-#define RENAME_BUF_SIZE 512
-
-/*
- * doom_remove - implemented via rfsControl if your Xinu version wires
- * RFS_CTL_UNLINK, otherwise falls back to opening and truncating.
- *
- * Check your rfsControl.c: if it handles a delete control code, use:
- *   control(RFILESYS, RFS_CTL_UNLINK, (int32)path, 0)
- *
- * If not wired, the best client-only option is to open the file for
- * write (which truncates it to zero on the server) and close it,
- * leaving a zero-byte file. This is the safest no-server fallback.
- */
-int doom_remove(const char *path)
-{
-    FILE fd;
-
-    /* Attempt via control() first — works if rfserver supports it */
-    if (control(RFILESYS, RFS_CTL_UNLINK, (int32)path, 0) != SYSERR)
-        return 0;
-
-    /*
-     * Fallback: truncate to zero. Not a true delete, but prevents
-     * Doom from reading stale save data on the next load.
-     */
-    fd = open(RFILESYS, (char *)path, "w");
-    if (fd == SYSERR)
-        return -1;
-    close(fd);
-    return 0;
-}
-
-/*
- * doom_rename - copy oldpath to newpath byte-by-byte, then remove oldpath.
- *
- * This is not atomic: a crash between the write and remove leaves both
- * files. Acceptable for Doom save games — the worst case is a duplicate.
- */
-int doom_rename(const char *oldpath, const char *newpath)
-{
-    FILE   src, dst;
-    char   buf[RENAME_BUF_SIZE];
-    int32  n;
-    int    ret = 0;
-
-    src = open(RFILESYS, (char *)oldpath, "r");
-    if (src == SYSERR)
-        return -1;
-
-    dst = open(RFILESYS, (char *)newpath, "w");
-    if (dst == SYSERR) {
-        close(src);
-        return -1;
-    }
-
-    /* Copy contents */
-    while ((n = read(src, buf, sizeof(buf))) > 0) {
-        if (write(dst, buf, n) != n) {
-            ret = -1;
-            break;
-        }
-    }
-
-    close(src);
-    close(dst);
-
-    if (ret == 0)
-        remove(oldpath);    /* best-effort; ignore failure */
-
-    return ret;
-}
+///*------------------------------------------------------------------------
+// * doom_fopen - open a file on the Xinu remote filesystem
+// *
+// * Returns a FILE (did32) on success, DOOM_INVALID_FILE on failure.
+// *------------------------------------------------------------------------
+// */
+//FILE doom_fopen(const char *path, const char *mode)
+//{
+//    char   xinu_mode[4];
+//    did32  fd;
+//
+//    /* Map C mode to Xinu RFS mode string, stripping 'b' (binary) flag */
+//    if (mode[0] == 'r' && mode[1] == '+') {
+//        xinu_mode[0] = 'r'; xinu_mode[1] = '+'; xinu_mode[2] = '\0';
+//    } else if (mode[0] == 'w') {
+//        xinu_mode[0] = 'w'; xinu_mode[1] = '\0';
+//    } else if (mode[0] == 'r') {
+//        xinu_mode[0] = 'r'; xinu_mode[1] = '\0';
+//    } else {
+//        return DOOM_INVALID_FILE;
+//    }
+//
+//    fd = open(RFILESYS, (char *)path, xinu_mode);
+//    return (fd == SYSERR) ? DOOM_INVALID_FILE : (FILE)fd;
+//}
+//
+///*------------------------------------------------------------------------
+// * doom_ftell - return the current byte offset in an open file
+// *
+// * Xinu has no native ftell. We use control() on the rfl device to
+// * query the current position via RFS_CTL_GETPOS if your Xinu version
+// * supports it, otherwise we track it via a small static table keyed on
+// * the device descriptor.
+// *------------------------------------------------------------------------
+// */
+//
+//#define FTELL_MAX_FDS 16
+//
+//static long ftell_pos[FTELL_MAX_FDS];
+//
+//long doom_ftell(FILE *fp)
+//{
+//    if (*fp < 0 || *fp >= FTELL_MAX_FDS)
+//        return -1L;
+//    return ftell_pos[(int)(*fp)];
+//}
+//
+///*
+// * doom_ftell_update - called internally after any read/write to keep
+// * the position table current. Wire this into your fread/fwrite shims
+// * if you need ftell accuracy after reads, e.g.:
+// *
+// *   n = read(fp, buf, len);
+// *   doom_ftell_update(fp, n);
+// */
+//void doom_ftell_update(FILE fp, int32 delta)
+//{
+//    if (fp >= 0 && fp < FTELL_MAX_FDS)
+//        ftell_pos[(int)fp] += delta;
+//}
+//
+//#define RENAME_BUF_SIZE 512
+//
+///*
+// * doom_remove - implemented via rfsControl if your Xinu version wires
+// * RFS_CTL_UNLINK, otherwise falls back to opening and truncating.
+// *
+// * Check your rfsControl.c: if it handles a delete control code, use:
+// *   control(RFILESYS, RFS_CTL_UNLINK, (int32)path, 0)
+// *
+// * If not wired, the best client-only option is to open the file for
+// * write (which truncates it to zero on the server) and close it,
+// * leaving a zero-byte file. This is the safest no-server fallback.
+// */
+//int doom_remove(const char *path)
+//{
+//    FILE fd;
+//
+//    /* Attempt via control() first — works if rfserver supports it */
+//    if (control(RFILESYS, RFS_CTL_UNLINK, (int32)path, 0) != SYSERR)
+//        return 0;
+//
+//    /*
+//     * Fallback: truncate to zero. Not a true delete, but prevents
+//     * Doom from reading stale save data on the next load.
+//     */
+//    fd = open(RFILESYS, (char *)path, "w");
+//    if (fd == SYSERR)
+//        return -1;
+//    close(fd);
+//    return 0;
+//}
+//
+///*
+// * doom_rename - copy oldpath to newpath byte-by-byte, then remove oldpath.
+// *
+// * This is not atomic: a crash between the write and remove leaves both
+// * files. Acceptable for Doom save games — the worst case is a duplicate.
+// */
+//int doom_rename(const char *oldpath, const char *newpath)
+//{
+//    FILE   src, dst;
+//    char   buf[RENAME_BUF_SIZE];
+//    int32  n;
+//    int    ret = 0;
+//
+//    src = open(RFILESYS, (char *)oldpath, "r");
+//    if (src == SYSERR)
+//        return -1;
+//
+//    dst = open(RFILESYS, (char *)newpath, "w");
+//    if (dst == SYSERR) {
+//        close(src);
+//        return -1;
+//    }
+//
+//    /* Copy contents */
+//    while ((n = read(src, buf, sizeof(buf))) > 0) {
+//        if (write(dst, buf, n) != n) {
+//            ret = -1;
+//            break;
+//        }
+//    }
+//
+//    close(src);
+//    close(dst);
+//
+//    if (ret == 0)
+//        remove(oldpath);    /* best-effort; ignore failure */
+//
+//    return ret;
+//}
+//
+//void mkdir(const char *s)
+//{
+//  kprintf("mkdir() not supported\n");
+//}
 
 //
 // // --- String Shims ---
