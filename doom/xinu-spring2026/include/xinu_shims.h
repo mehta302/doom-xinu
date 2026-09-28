@@ -17,6 +17,7 @@ int vsnprintf(char *str, size_t size, char *fmt, va_list ap);
 void puts(const char *msg);
 int toupper(int ch);
 float atof(const char *value);
+float fabs(float x);
 
 typedef struct {
     char   *ptr;        /* current write position           */

@@ -1,5 +1,9 @@
 #include <xinu.h>
+#include <stdio.h>
 #include <stdarg.h>
+
+extern void _fdoprnt(char *, va_list, int (*)(did32, char), int);
+
 //
 // // Xinu external functions (assumed)
 // extern void* getmem(uint32_t nbytes);
@@ -109,6 +113,11 @@ int isspace(int c)
             c == '\r');
 }
 
+int isdigit(int c)
+{
+    return (c >= '0' && c <= '9');
+}
+
 int snprintf(
       char         *str,        /* output buffer                */
       size_t        size,       /* max bytes including '\0'     */
@@ -136,7 +145,7 @@ int snprintf(
     return state.count;         /* return total that would have been written */
 }
 
-static int snprntf(
+int snprntf(
              int    astate,     /* pointer to snprntf_state, passed as int  */
              int    ac          /* character to write                        */
            )
@@ -188,7 +197,7 @@ int     vsnprintf(
  *               so the truncated-length return value stays correct.
  *------------------------------------------------------------------------
  */
-static int      vsnprntf(
+int      vsnprntf(
                   int           actx,
                   int           ac
                 )
@@ -214,12 +223,12 @@ void puts(const char *msg)
 
 int toupper(int ch)
 {
-  if (c >= 'a' && c <= 'z')
-    return c - ('a' - 'A');
-  return c;
+  if (ch >= 'a' && ch <= 'z')
+    return ch - ('a' - 'A');
+  return ch;
 }
 
-float my_atof(const char *str)
+float atof(const char *str)
 {
     float result = 0.0;
     float sign = 1.0;
@@ -277,7 +286,8 @@ float my_atof(const char *str)
         }
 
         float factor = 1.0;
-        for (int i = 0; i < exponent; i++) {
+        int i;
+        for (i = 0; i < exponent; i++) {
             factor *= 10.0;
         }
 
@@ -289,6 +299,18 @@ float my_atof(const char *str)
     }
 
     return result;
+}
+
+float fabs(float x)
+{
+    if (x < 0.0) {
+        return -x;
+    }
+    // Handles positive numbers, 0.0, and -0.0 (though -0.0 becomes 0.0)
+    if (x == 0.0) {
+        return 0.0;
+    }
+    return x;
 }
 
 //
@@ -303,6 +325,7 @@ int system(const char *s)
 int fflush(int fs)
 {
   kprintf("fflush() not supported\n");
+  return 0;
 }
 
 
