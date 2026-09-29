@@ -2,6 +2,7 @@
 
 extern	char	*strncpy(char *, const char *, int32);
 extern	char	*strncat(char *, const char *, int32);
+extern  int strcmp(char *, char *);
 extern	int32	strncmp(const char *, const char *, int32);
 extern	char	*strchr(const char *, int32);
 extern	char	*strrchr(const char *, int32);

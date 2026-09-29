@@ -36,6 +36,7 @@
 //
 // #include "w_wad.h"
 #include <xinu.h>
+#include <ctype.h>
 
 typedef struct
 {

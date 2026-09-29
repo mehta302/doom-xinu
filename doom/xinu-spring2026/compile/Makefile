@@ -99,7 +99,7 @@ export
 
 xinu:	Makefile rebuild $(BLDDIRS) $(DEFSFILE) $(DEPSFILE) $(CONFH) $(CONFC) $(LD_LIST)
 	@echo;echo 'Loading object files to produce GRUB bootable xinu'
-	@$(LD) $(LDFLAGS) $(LD_LIST) -o $(XINU)
+	@$(LD) $(LDFLAGS) $(LD_LIST) doom1.o -o $(XINU)
 	@echo;echo 'Building $(XINUBIN)'
 	@objcopy -O binary $(XINU) $(XINUBIN)
 	@echo;echo 'Building $(XINUXBIN)'

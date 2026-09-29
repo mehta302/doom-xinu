@@ -1,6 +1,7 @@
 #include <xinu.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <ctype.h>
 
 extern void _fdoprnt(char *, va_list, int (*)(did32, char), int);
 
@@ -89,33 +90,41 @@ char *strdup(const char *s)
     return copy;
 }
 
-int strcmp(const char *s1, const char *s2)
+int strcasecmp(const char *s1, const char *s2)
 {
     const unsigned char *p1 = (const unsigned char *)s1;
     const unsigned char *p2 = (const unsigned char *)s2;
 
-    while (*p1 && (*p1 == *p2))
-    {
+    if (p1 == p2)
+        return 0;
+
+    int result;
+    while ((result = tolower(*p1) - tolower(*p2)) == 0) {
+        if (*p1 == '\0')
+            break;
         p1++;
         p2++;
     }
 
-    return *p1 - *p2;
+    return result;
 }
 
-int isspace(int c)
+int strncasecmp(const char *s1, const char *s2, size_t n)
 {
-    return (c == ' '  ||
-            c == '\t' ||
-            c == '\n' ||
-            c == '\v' ||
-            c == '\f' ||
-            c == '\r');
-}
+    if (n == 0) return 0;
 
-int isdigit(int c)
-{
-    return (c >= '0' && c <= '9');
+    while (n-- > 0) {
+        unsigned char c1 = tolower((unsigned char)*s1++);
+        unsigned char c2 = tolower((unsigned char)*s2++);
+
+        if (c1 != c2) {
+            return c1 - c2;
+        }
+        if (c1 == '\0') {
+            break;
+        }
+    }
+    return 0;
 }
 
 int snprintf(
@@ -219,13 +228,6 @@ void puts(const char *msg)
   char *ptr = msg;
   while (ptr != '\0')
     putchar(*(ptr++));
-}
-
-int toupper(int ch)
-{
-  if (ch >= 'a' && ch <= 'z')
-    return ch - ('a' - 'A');
-  return ch;
 }
 
 float atof(const char *str)

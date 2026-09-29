@@ -58,6 +58,7 @@
 //
 // #include "m_menu.h"
 #include <xinu.h>
+#include <ctype.h>
 
 
 extern patch_t*		hu_font[HU_FONTSIZE];

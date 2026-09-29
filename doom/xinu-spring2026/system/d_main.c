@@ -74,6 +74,7 @@
 //
 // #include "d_main.h"
 #include <xinu.h>
+#include <ctype.h>
 
 //
 // D-DoomLoop()

@@ -8,16 +8,15 @@ void* realloc(void* ptr, size_t size);
 void* memmove(void* dest, const void* src, size_t n);
 
 char* strdup(const char *s);
-int strcmp(const char *s1, const char *s2);
-int isspace(int c);
 int snprntf(int astate, int ac);
 int snprintf(char *str, size_t size, const char *fmt, ...);
 int vsnprntf(int actx, int ac);
 int vsnprintf(char *str, size_t size, char *fmt, va_list ap);
 void puts(const char *msg);
-int toupper(int ch);
 float atof(const char *value);
 float fabs(float x);
+int strcasecmp(const char *s1, const char *s2);
+int strncasecmp(const char *s1, const char *s2, size_t n);
 
 typedef struct {
     char   *ptr;        /* current write position           */

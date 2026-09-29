@@ -53,11 +53,22 @@ fixed_t FixedDiv(fixed_t a, fixed_t b)
     }
     else
     {
-	int64_t result;
+	//int64_t result;
+  fixed_t quotient, remainder;
 
-	result = ((int64_t) a << 16) / b;
+  __asm__ __volatile__ (
+    "idivl %4"
+    : "=a" (quotient), "=d" (remainder)
+    : "a" ((unsigned int) a << 16), "d" (a >> 16), "r" (b)
+    : "cc"
+  );
 
-	return (fixed_t) result;
+  (void) remainder;
+
+	//result = ((int64_t) a << 16) / b;
+
+	//return (fixed_t) result;
+  return quotient;
     }
 }
 

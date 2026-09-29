@@ -379,7 +379,7 @@ void I_Error (char *error, ...)
     // Message first.
     va_start(argptr, error);
     //fprintf(stderr, "\nError: ");
-    vfprintf(stderr, error, argptr);
+    //vfprintf(stderr, error, argptr);
     fprintf(stderr, "\n\n");
     va_end(argptr);
     fflush(stderr);

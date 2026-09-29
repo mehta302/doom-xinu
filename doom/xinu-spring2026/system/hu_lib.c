@@ -28,6 +28,7 @@
 // #include "r_local.h"
 // #include "r_draw.h"
 #include <xinu.h>
+#include <ctype.h>
 
 // boolean : whether the screen is always erased
 #define noterased viewwindowx
