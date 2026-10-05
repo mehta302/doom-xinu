@@ -226,8 +226,9 @@ int      vsnprntf(
 void puts(const char *msg)
 {
   char *ptr = msg;
-  while (ptr != '\0')
+  while (*ptr != '\0')
     putchar(*(ptr++));
+  putchar('\n');
 }
 
 float atof(const char *str)

@@ -55,6 +55,7 @@ static wad_file_t *W_StdC_OpenFile(char *path)
     result->wad.mapped = NULL;
     //result->wad.length = M_FileLength(fstream);
     result->wad.length = (unsigned int) (_binary_doom1_wad_end - _binary_doom1_wad_start);
+    kprintf("WAD LENGTH: %d\n", result->wad.length);
     //result->fstream = fstream;
     result->fstream = _binary_doom1_wad_start;
 

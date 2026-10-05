@@ -6,9 +6,10 @@ process	main(void)
 {
   char **argv = (char *[]){"doomgeneric"};
   doomgeneric_Create(1, argv);
-  while (1) {
-    doomgeneric_Tick();
-  }
+  //while (1) {
+  //  doomgeneric_Tick();
+  //}
+  kprintf("Exiting the main process");
   return OK;
  //    
  //    	kprintf("\nHello World!\n");

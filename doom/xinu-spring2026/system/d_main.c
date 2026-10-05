@@ -1178,6 +1178,7 @@ void D_DoomMain (void)
     I_PrintBanner(PACKAGE_STRING);
 
     DEH_printf("Z_Init: Init zone memory allocation daemon. \n");
+
     Z_Init ();
 
 #ifdef FEATURE_MULTIPLAYER
@@ -1358,27 +1359,34 @@ void D_DoomMain (void)
     // Load configuration files before initialising other subsystems.
     DEH_printf("M_LoadDefaults: Load system defaults.\n");
     M_SetConfigFilenames("default.cfg", PROGRAM_PREFIX "doom.cfg");
+    DEH_printf("Binding Variables\n");
     D_BindVariables();
+    DEH_printf("Init Load Defaults");
     M_LoadDefaults();
 
     // Save configuration at exit.
     I_AtExit(M_SaveDefaults, false);
 
     // Find main IWAD file and load it.
-    iwadfile = D_FindIWAD(IWAD_MASK_DOOM, &gamemission);
+    //iwadfile = D_FindIWAD(IWAD_MASK_DOOM, &gamemission);
+
+    DEH_printf("Setting wad stuff");
+    iwadfile = "doom1.wad";
+    gamemission = doom;
 
     // None found?
 
-    if (iwadfile == NULL)
-    {
-        I_Error("Game mode indeterminate.  No IWAD file was found.  Try\n"
-                "specifying one with the '-iwad' command line parameter.\n");
-    }
+    //if (iwadfile == NULL)
+    //{
+    //    I_Error("Game mode indeterminate.  No IWAD file was found.  Try\n"
+    //            "specifying one with the '-iwad' command line parameter.\n");
+    //}
 
     modifiedgame = false;
 
     DEH_printf("W_Init: Init WADfiles.\n");
     D_AddFile(iwadfile);
+    kprintf("Number of lumps: %d\n", numlumps);
 #if ORIGCODE
     numiwadlumps = numlumps;
 #endif
