@@ -344,16 +344,22 @@ void D_BindVariables(void)
     I_BindJoystickVariables();
     I_BindSoundVariables();
 
+    kprintf("3");
+
     M_BindBaseControls();
     M_BindWeaponControls();
     M_BindMapControls();
     M_BindMenuControls();
     M_BindChatControls(MAXPLAYERS);
 
+    kprintf("4");
+
     key_multi_msgplayer[0] = HUSTR_KEYGREEN;
     key_multi_msgplayer[1] = HUSTR_KEYINDIGO;
     key_multi_msgplayer[2] = HUSTR_KEYBROWN;
     key_multi_msgplayer[3] = HUSTR_KEYRED;
+
+    kprintf("5");
 
 #ifdef FEATURE_MULTIPLAYER
     NET_BindVariables();
@@ -370,6 +376,8 @@ void D_BindVariables(void)
     M_BindVariable("vanilla_demo_limit",     &vanilla_demo_limit);
     M_BindVariable("show_endoom",            &show_endoom);
 
+    kprintf("5");
+
     // Multiplayer chat macros
 
     for (i=0; i<10; ++i)
@@ -379,6 +387,8 @@ void D_BindVariables(void)
         M_snprintf(buf, sizeof(buf), "chatmacro%i", i);
         M_BindVariable(buf, &chat_macros[i]);
     }
+
+    kprintf("6");
 }
 
 //
